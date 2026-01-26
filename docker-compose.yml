@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  efficiency-clock:
+    build: .
+    container_name: efficiency-clock-app
+    ports:
+      - "80:8080"  # 将服务器的 80 端口映射到容器的 8080 端口，方便手机直接通过 IP 访问
+    volumes:
+      - ./data:/app/data  # 挂载数据目录，实现 H2 数据库持久化，重启容器数据不丢失
+    restart: always
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:h2:file:/app/data/antigravity  # 强制指定容器内部的数据库路径
+      - TZ=Asia/Shanghai  # 设置时区
