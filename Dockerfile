@@ -26,14 +26,14 @@ COPY src ./src
 # 将阶段一构建好的静态文件复制到后端的静态资源目录
 COPY --from=frontend-builder /app/src/main/resources/static ./src/main/resources/static
 
-# 打包后端
-RUN mvn clean package -DskipTests
+# 打包后端 (增加 -U 强制刷新依赖)
+RUN mvn clean package -DskipTests -U
 
 # --- 阶段三：运行环境 ---
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
-# 从阶段二复制打好的 JAR 包
-COPY --from=backend-builder /app/target/*.jar app.jar
+# 显式排除 .original 的普通包，只复制包含依赖的胖包
+COPY --from=backend-builder /app/target/antigravity-0.0.1-SNAPSHOT.jar app.jar
 
 # 暴露端口
 EXPOSE 8080
