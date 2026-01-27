@@ -32,11 +32,19 @@ RUN mvn clean package -DskipTests -U
 # --- 阶段三：运行环境 ---
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
+
+# 安装 netcat 用于网络检测
+RUN apk add --no-cache netcat-openbsd
+
 # 显式排除 .original 的普通包，只复制包含依赖的胖包
 COPY --from=backend-builder /app/target/antigravity-0.0.1-SNAPSHOT.jar app.jar
+
+# 复制等待脚本
+COPY wait-for-mysql.sh /wait-for-mysql.sh
+RUN chmod +x /wait-for-mysql.sh
 
 # 暴露端口
 EXPOSE 8080
 
-# 启动命令
-ENTRYPOINT ["java", "-Dfile.encoding=UTF-8", "-jar", "app.jar"]
+# 启动命令：先等待 MySQL，再启动应用
+ENTRYPOINT ["/wait-for-mysql.sh", "mysql", "java", "-Dfile.encoding=UTF-8", "-jar", "app.jar"]
