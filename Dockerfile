@@ -30,11 +30,8 @@ WORKDIR /app
 # 从阶段二复制打好的 JAR 包
 COPY --from=backend-builder /app/target/*.jar app.jar
 
-# 创建数据目录（用于 H2 数据库持久化）
-RUN mkdir -p /app/data
-
 # 暴露端口
 EXPOSE 8080
 
 # 启动命令
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Dfile.encoding=UTF-8", "-jar", "app.jar"]

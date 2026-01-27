@@ -3,20 +3,21 @@
 
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.2-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![Vue.js](https://img.shields.io/badge/Vue.js-3.4-blue.svg)](https://vuejs.org/)
+[![MySQL](https://img.shields.io/badge/MySQL-8.0-blue.svg)](https://www.mysql.com/)
 [![Docker](https://img.shields.io/badge/Docker-Supported-blue)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**Antigravity** 是一款融合了 **番茄钟**、**任务管理** 与 **游戏化激励系统** 的全栈效率应用。它不仅是一个工具，更通过深蓝与极光的视觉设计、沉浸式的动画交互，带给你前所未有的专注体验。
+**Antigravity** 是一款融合了 **修仙主题**、**番茄钟**、**任务管理** 与 **游戏化激励系统** 的全栈效率应用。它不仅是一个工具，更通过深蓝与极光的视觉设计、沉浸式的动画交互，带给你前所未有的专注体验。
 
 ---
 
 ## ✨ 核心特性
 
 - ⏳ **沉浸专注模式**：精美的呼吸灯效果时钟，支持番茄钟倒计时，助力深度工作。
-- 🎮 **游戏化等级系统**：每一次专注都会转化为经验值，升级解锁成就，让进步清晰可见。
-- 📝 **极简任务管理**：快速创建、多任务并行处理，完成后一键勾选，数据自动同步。
-- 🎆 **视觉激励反馈**：达成里程碑时触发炫酷的粒子礼花动画，仪式感拉满。
-- 📱 **多端全兼容**：自适应移动端与桌面端，支持通过 Docker 快速部署并实现手机远程访问。
+- 🧘 **修仙境界系统**：每一次专注都会转化为“天地灵气”（经验值），助你渡劫破境，从“炼气期”一路攀升至“创世神”。
+- 📝 **多任务并行管理**：支持创建多个专注任务，独立计时，数据实时同步至数据库。
+- 🎆 **视觉激励反馈**：达成任务或破境成功时触发炫酷的粒子礼花动画，仪式感拉满。
+- 🐳 **Docker 化部署**：支持 Docker Compose 一键启动，集成 MySQL 8.0 环境，数据持久化存储。
 
 ---
 
@@ -25,8 +26,9 @@
 ### 后端 (Java Ecosystem)
 - **Framework**: Spring Boot 3.2.2 (Java 17)
 - **ORM**: MyBatis
-- **Database**: H2 Database (单文件持久化，零配置启动)
-- **API**: RESTful 风格接口
+- **Database**: **MySQL 8.0** (支持 UTF-8mb4，完美兼容中文字符)
+- **Init**: 启动自动执行 `schema.sql` 与 `data.sql`
+- **Config**: 支持环境变量动态配置数据库连接
 
 ### 前端 (Modern Web)
 - **Framework**: Vue 3 (Composition API)
@@ -39,33 +41,39 @@
 ## 🚀 快速开始
 
 ### 方案一：Docker 一键部署 (推荐 ⚡)
-如果你有 Docker 环境，这是最快捷的方式。
+如果你有 Docker 环境，这是最快捷的方式。项目已预设好应用与数据库的关联。
 
 1. **克隆项目**
    ```bash
-   git clone https://github.com/你的用户名/efficiency-clock.git
+   git clone <your-repository-url>
    cd efficiency-clock
    ```
 2. **启动服务**
    ```bash
-   docker-compose up -d
+   # 首次启动或配置变更建议重新构建
+   docker-compose up -d --build
    ```
 3. **访问**
-   在浏览器打开 `http://localhost` 即可。
+   在浏览器打开 `http://localhost` 即可。手机端可通过 `http://服务器IP` 访问。
 
 ### 方案二：本地开发调试
-#### 1. 后端启动
+#### 1. 准备数据库
+- 请确保本地已安装 MySQL 8.0+。
+- 创建数据库 `antigravity`。
+- 修改 `src/main/resources/application.yml` 中的数据库用户名和密码（默认为 `root/123456`）。
+
+#### 2. 后端启动
 - 确保已安装 JDK 17。
-- 使用 IDE 打开根目录，运行 `AntigravityApplication.java`。
+- 运行 `AntigravityApplication.java`。
 - 默认端口：`8080`
 
-#### 2. 前端启动
+#### 3. 前端启动
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-- 访问地址：`http://localhost:9999`
+- 访问地址：`http://localhost:5173` (Vite 默认)
 
 ---
 
@@ -74,20 +82,19 @@ npm run dev
 ```text
 efficiency-clock/
 ├── frontend/              # Vue 3 前端工程
-│   ├── src/               # 源代码 (App.vue, main.js, style.css)
-│   └── vite.config.js     # 前端构建配置
 ├── src/                   # Spring Boot 后端工程
-│   ├── main/java/         # 业务逻辑 (Controller, Service, Mapper)
-│   └── main/resources/    # 配置与 SQL 脚本
-├── Dockerfile             # 多阶段构建镜像定义
-├── docker-compose.yml     # 容器编排定义
-└── pom.xml                # Maven 依赖管理
+│   ├── main/java/         # 业务逻辑
+│   └── main/resources/    # 配置与 SQL 脚本 (schema.sql, data.sql)
+├── data/mysql             # [Docker映射] MySQL 数据持久化目录
+├── Dockerfile             # 镜像构建文件
+└── docker-compose.yml     # 容器编排 (App + MySQL)
 ```
 
 ---
 
-## 📜 开源协议
-本项目基于 [MIT License](LICENSE) 协议。
+## 📜 关键配置说明
+- **数据库密码**: 默认设置为 `123456`，可在 `docker-compose.yml` 或 `application.yml` 中修改。
+- **中文支持**: 已全链路开启 `utf8mb4`，支持在任务名或境界名中使用中文。
 
 ---
 
