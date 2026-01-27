@@ -1,6 +1,8 @@
 services:
   efficiency-clock:
-    build: .
+    build:
+      context: .
+      network: host
     container_name: efficiency-clock-app
     ports:
       - "80:8080"
