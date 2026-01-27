@@ -445,7 +445,9 @@ const fireConfetti = () => {
                     class="action-btn success-btn"
                     @click="completeTask(task)"
                   >
-                    <span class="btn-icon">✓</span>
+                    <svg class="btn-svg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
                     <span class="btn-text">完成</span>
                     <div class="btn-ripple"></div>
                   </button>
@@ -453,7 +455,9 @@ const fireConfetti = () => {
                     class="action-btn danger-btn"
                     @click="giveUpTask(task)"
                   >
-                    <span class="btn-icon">✗</span>
+                    <svg class="btn-svg-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
                     <span class="btn-text">放弃</span>
                     <div class="btn-ripple"></div>
                   </button>
@@ -1121,7 +1125,16 @@ const fireConfetti = () => {
   color: white;
 }
 
+.btn-icon, .btn-svg-icon {
+  width: 1.2rem;
+  height: 1.2rem;
+  flex-shrink: 0;
+}
+
 .btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 1.2rem;
   font-weight: 800;
 }
