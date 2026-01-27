@@ -200,30 +200,32 @@ const completeTask = async (task) => {
       method: 'PUT'
     });
 
-    if (!res.ok) throw new Error('完成任务失败');
+    if (!res.ok) {
+      // 检查是否是因为任务已被其他设备完成
+      await loadRunningTasks();
+      await loadCompletedTasks();
+      
+      const isStillRunning = runningTasks.value.some(t => t.id === task.id);
+      if (!isStillRunning) {
+        // 任务已经在其他地方完成了，直接返回即可，不需要报错
+        return;
+      }
+      throw new Error('完成任务失败');
+    }
 
     const data = await res.json();
-
-    // Update user
+    // ... 保持原有逻辑 ...
     user.rank = data.newRank;
     user.exp = data.totalExperience;
-
-    // Remove from running tasks
     runningTasks.value = runningTasks.value.filter(t => t.id !== task.id);
-
-    // Reload completed tasks
     await loadCompletedTasks();
-
-    // Show celebration
     fireConfetti();
-
     showDialog({
       title: data.levelUp ? '⚡ 境界突破 ⚡' : '✓ 本次修炼圆满',
       message: `${data.message}\n当前境界: ${data.newRank}\n累计元气: ${data.totalExperience}`,
       theme: 'round-button',
       confirmButtonColor: '#7232dd'
     });
-
   } catch (err) {
     showToast('心魔干扰: ' + err.message);
   }
@@ -235,10 +237,19 @@ const giveUpTask = (task) => {
     title: '心魔入侵',
     message: '半途而废容易走火入魔，确定要出关吗？',
     showCancelButton: true,
-  }).then(() => {
+  }).then(async () => {
     if (task.interval) {
       clearInterval(task.interval);
     }
+    
+    try {
+      await fetch(`/api/focus/${task.id}`, {
+        method: 'DELETE'
+      });
+    } catch (err) {
+      console.error('Failed to abandon task on backend:', err);
+    }
+
     runningTasks.value = runningTasks.value.filter(t => t.id !== task.id);
     showToast('已放弃修炼');
   }).catch(() => {

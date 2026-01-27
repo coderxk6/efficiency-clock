@@ -84,8 +84,13 @@ public class FocusController {
       throw new RuntimeException("Task not found");
     }
 
+    if ("COMPLETED".equals(task.getStatus())) {
+      UserLevel user = userLevelMapper.getUserLevel();
+      return new FocusResponse("修炼此前已圆满完成", user.getCultivationRank(), user.getTotalExperience(), false);
+    }
+
     if (!"RUNNING".equals(task.getStatus())) {
-      throw new RuntimeException("Task is not running");
+      throw new RuntimeException("任务状态异常，无法完成。当前状态: " + task.getStatus());
     }
 
     // Update task status
@@ -122,6 +127,17 @@ public class FocusController {
         : "修炼结束，吸收了 " + expGain + " 点天地灵气。";
 
     return new FocusResponse(message, user.getCultivationRank(), user.getTotalExperience(), levelUp);
+  }
+
+  /**
+   * Abandon a focus task by ID
+   */
+  @DeleteMapping("/{taskId}")
+  public void abandonTask(@PathVariable Long taskId) {
+    FocusTask task = focusMapper.selectTaskById(taskId);
+    if (task != null && "RUNNING".equals(task.getStatus())) {
+      focusMapper.updateTaskStatus(taskId, "ABANDONED", LocalDateTime.now());
+    }
   }
 
   /**
