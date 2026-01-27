@@ -11,6 +11,11 @@ RUN npm run build
 # --- 阶段二：构建后端 ---
 FROM maven:3.9.6-eclipse-temurin-17-alpine AS backend-builder
 WORKDIR /app
+
+# 配置阿里云 Maven 镜像以加速并解决网络连接问题
+RUN mkdir -p /root/.m2 && \
+    echo '<?xml version="1.0" encoding="UTF-8"?><settings xmlns="http://maven.apache.org/SETTINGS/1.2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd"><mirrors><mirror><id>aliyunmaven</id><mirrorOf>central</mirrorOf><name>aliyun maven</name><url>https://maven.aliyun.com/repository/public</url></mirror></mirrors></settings>' > /root/.m2/settings.xml
+
 # 复制 Maven 配置文件
 COPY pom.xml .
 # 下载依赖（利用 Docker 缓存）
