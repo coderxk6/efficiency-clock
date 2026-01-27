@@ -1,11 +1,9 @@
 #!/bin/sh
-# 等待 MySQL 完全就绪的脚本
 
 set -e
 
 host="127.0.0.1"
 port="3307"
-shift
 cmd="$@"
 
 until nc -z -v -w30 $host $port
