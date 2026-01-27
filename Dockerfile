@@ -47,4 +47,4 @@ RUN chmod +x /wait-for-mysql.sh
 EXPOSE 8080
 
 # 启动命令：先等待 MySQL，再启动应用
-ENTRYPOINT ["/wait-for-mysql.sh", "mysql", "java", "-Dfile.encoding=UTF-8", "-jar", "app.jar"]
+ENTRYPOINT ["/wait-for-mysql.sh", "java", "-Dfile.encoding=UTF-8", "-jar", "app.jar"]
