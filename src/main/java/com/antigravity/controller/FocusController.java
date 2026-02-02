@@ -21,6 +21,7 @@ public class FocusController {
 
   private final FocusMapper focusMapper;
   private final UserLevelMapper userLevelMapper;
+  private final com.antigravity.util.SecurityUtils securityUtils;
   private final Random random = new Random();
 
   private static final String[] RANKS = {
@@ -32,9 +33,11 @@ public class FocusController {
       "道祖境", "混元无极", "创世神"
   };
 
-  public FocusController(FocusMapper focusMapper, UserLevelMapper userLevelMapper) {
+  public FocusController(FocusMapper focusMapper, UserLevelMapper userLevelMapper, 
+                         com.antigravity.util.SecurityUtils securityUtils) {
     this.focusMapper = focusMapper;
     this.userLevelMapper = userLevelMapper;
+    this.securityUtils = securityUtils;
   }
 
   /**
@@ -42,7 +45,10 @@ public class FocusController {
    */
   @PostMapping("/start")
   public StartFocusResponse startFocus(@RequestBody StartFocusRequest request) {
+    Long userId = securityUtils.getCurrentUserId();
+    
     FocusTask task = new FocusTask();
+    task.setUserId(userId);
     task.setTaskName(request.taskName());
     task.setDurationSeconds(request.durationSeconds());
     task.setStatus("RUNNING");
@@ -69,7 +75,7 @@ public class FocusController {
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     return new StartFocusResponse(
         task.getId(),
-        "修炼任务已开始：" + request.taskName(),
+        "修炼任务已开始:" + request.taskName(),
         task.getExpectedEndAt().format(formatter));
   }
 
@@ -78,15 +84,17 @@ public class FocusController {
    */
   @PutMapping("/{taskId}/complete")
   public FocusResponse completeTask(@PathVariable Long taskId) {
+    Long userId = securityUtils.getCurrentUserId();
+    
     FocusTask task = focusMapper.selectTaskById(taskId);
 
-    if (task == null) {
+    if (task == null || !task.getUserId().equals(userId)) {
       throw new RuntimeException("Task not found");
     }
 
     if ("COMPLETED".equals(task.getStatus())) {
-      UserLevel user = userLevelMapper.getUserLevel();
-      return new FocusResponse("修炼此前已圆满完成", user.getCultivationRank(), user.getTotalExperience(), false);
+      UserLevel userLevel = getUserLevel(userId);
+      return new FocusResponse("修炼此前已圆满完成", userLevel.getCultivationRank(), userLevel.getTotalExperience(), false);
     }
 
     if (!"RUNNING".equals(task.getStatus())) {
@@ -98,13 +106,7 @@ public class FocusController {
     focusMapper.updateTaskStatus(taskId, "COMPLETED", now);
 
     // Update User Level
-    UserLevel user = userLevelMapper.getUserLevel();
-    if (user == null) {
-      user = new UserLevel();
-      user.setId(1L);
-      user.setTotalExperience(0L);
-      user.setCultivationRank("炼气期 - 1层");
-    }
+    UserLevel user = getUserLevel(userId);
 
     long expGain = task.getDurationSeconds();
     user.setTotalExperience(user.getTotalExperience() + expGain);
@@ -129,13 +131,25 @@ public class FocusController {
     return new FocusResponse(message, user.getCultivationRank(), user.getTotalExperience(), levelUp);
   }
 
+  private UserLevel getUserLevel(Long userId) {
+    return userLevelMapper.getUserLevelByUserId(userId).orElseGet(() -> {
+      UserLevel newUserLevel = new UserLevel();
+      newUserLevel.setUserId(userId);
+      newUserLevel.setTotalExperience(0L);
+      newUserLevel.setCultivationRank("炼气期 - 1层");
+      userLevelMapper.insertUserLevel(newUserLevel);
+      return newUserLevel;
+    });
+  }
+
   /**
    * Abandon a focus task by ID
    */
   @DeleteMapping("/{taskId}")
   public void abandonTask(@PathVariable Long taskId) {
+    Long userId = securityUtils.getCurrentUserId();
     FocusTask task = focusMapper.selectTaskById(taskId);
-    if (task != null && "RUNNING".equals(task.getStatus())) {
+    if (task != null && task.getUserId().equals(userId) && "RUNNING".equals(task.getStatus())) {
       focusMapper.updateTaskStatus(taskId, "ABANDONED", LocalDateTime.now());
     }
   }
@@ -145,7 +159,8 @@ public class FocusController {
    */
   @GetMapping("/tasks")
   public List<TaskListItem> getRunningTasks() {
-    List<FocusTask> tasks = focusMapper.selectRunningTasks();
+    Long userId = securityUtils.getCurrentUserId();
+    List<FocusTask> tasks = focusMapper.selectRunningTasksByUserId(userId);
     LocalDateTime now = LocalDateTime.now();
 
     return tasks.stream()
@@ -174,7 +189,8 @@ public class FocusController {
    */
   @GetMapping("/history")
   public List<TaskListItem> getTaskHistory(@RequestParam(defaultValue = "50") int limit) {
-    List<FocusTask> tasks = focusMapper.selectCompletedTasks(limit);
+    Long userId = securityUtils.getCurrentUserId();
+    List<FocusTask> tasks = focusMapper.selectCompletedTasksByUserId(userId, limit);
 
     return tasks.stream()
         .map(task -> new TaskListItem(

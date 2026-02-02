@@ -2,6 +2,76 @@
 import { ref, reactive, computed, onMounted } from 'vue';
 import { showToast, showDialog } from 'vant';
 import confetti from 'canvas-confetti';
+import Login from './Login.vue';
+
+// 用户登录状态
+const isLoggedIn = ref(false);
+const currentUser = ref({
+  username: '',
+  nickname: '',
+  isGuest: false
+});
+
+// 检查登录状态
+const checkLoginStatus = () => {
+  const token = localStorage.getItem('token');
+  const username = localStorage.getItem('username');
+  const nickname = localStorage.getItem('nickname');
+  const isGuest = localStorage.getItem('isGuest') === 'true';
+  
+  if (token && username) {
+    isLoggedIn.value = true;
+    currentUser.value = { username, nickname, isGuest };
+    return true;
+  }
+  return false;
+};
+
+// 登录成功回调
+const handleLoginSuccess = (authData) => {
+  isLoggedIn.value = true;
+  currentUser.value = {
+    username: authData.username,
+    nickname: authData.nickname,
+    isGuest: authData.isGuest
+  };
+};
+
+// 登出
+const handleLogout = () => {
+  showDialog({
+    title: '确认退出',
+    message: currentUser.value.isGuest 
+      ? '游客数据仍会保留在本次会话中' 
+      : '确定要退出登录吗？',
+    showCancelButton: true,
+  }).then(() => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('username');
+    localStorage.removeItem('nickname');
+    localStorage.removeItem('isGuest');
+    isLoggedIn.value = false;
+    currentUser.value = { username: '', nickname: '', isGuest: false };
+    showToast('已退出登录');
+  }).catch(() => {});
+};
+
+// 创建一个 fetch 包装器，自动添加 Authorization header
+const authFetch = (url, options = {}) => {
+  const token = localStorage.getItem('token');
+  const headers = {
+    ...options.headers,
+  };
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  return fetch(url, {
+    ...options,
+    headers
+  });
+};
 
 // Tabs
 const activeTab = ref(0);
@@ -71,15 +141,18 @@ const user = reactive({
 
 // Load tasks from backend on mount
 onMounted(async () => {
-  await loadRunningTasks();
-  await loadCompletedTasks();
-  initManualTimes();
+  // 检查登录状态
+  if (checkLoginStatus()) {
+    await loadRunningTasks();
+    await loadCompletedTasks();
+    initManualTimes();
+  }
 });
 
 // Load running tasks from backend
 const loadRunningTasks = async () => {
   try {
-    const res = await fetch('/api/focus/tasks');
+    const res = await authFetch('/api/focus/tasks');
     if (res.ok) {
       const tasks = await res.json();
       runningTasks.value = tasks.map(task => ({
@@ -102,7 +175,7 @@ const loadRunningTasks = async () => {
 // Load completed tasks from backend
 const loadCompletedTasks = async () => {
   try {
-    const res = await fetch('/api/focus/history?limit=50');
+    const res = await authFetch('/api/focus/history?limit=50');
     if (res.ok) {
       completedTasks.value = await res.json();
     }
@@ -132,7 +205,7 @@ const startFocus = async () => {
   }
 
   try {
-    const res = await fetch('/api/focus/start', {
+    const res = await authFetch('/api/focus/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -196,7 +269,7 @@ const completeTask = async (task) => {
   }
 
   try {
-    const res = await fetch(`/api/focus/${task.id}/complete`, {
+    const res = await authFetch(`/api/focus/${task.id}/complete`, {
       method: 'PUT'
     });
 
@@ -243,7 +316,7 @@ const giveUpTask = (task) => {
     }
     
     try {
-      await fetch(`/api/focus/${task.id}`, {
+      await authFetch(`/api/focus/${task.id}`, {
         method: 'DELETE'
       });
     } catch (err) {
@@ -319,15 +392,35 @@ const fireConfetti = () => {
 </script>
 
 <template>
-  <div class="app-container">
+  <!-- Login Screen -->
+  <Login v-if="!isLoggedIn" @login-success="handleLoginSuccess" />
+
+  <!-- Main App -->
+  <div v-else class="app-container">
+    <!-- Global Logout Button (Top Right) -->
+    <button class="global-logout-btn" @click="handleLogout" title="退出登录">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <polyline points="16 17 21 12 16 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>退出</span>
+    </button>
+
     <!-- Header -->
     <div class="header">
       <h1 class="app-title">⚡ Efficiency Clock</h1>
-      <p class="subtitle">修仙专注，逆天改命</p>
+      <p class="subtitle">修仙专注, 逆天改命</p>
       
       <div class="status-card">
-        <div class="rank-badge">{{ user.rank }}</div>
-        <div class="exp-text">灵力: {{ user.exp }}</div>
+        <div class="user-meta">
+          <span class="user-nickname">{{ currentUser.nickname || currentUser.username }}</span>
+          <span v-if="currentUser.isGuest" class="guest-badge">游客</span>
+        </div>
+        <div class="cultivation-info">
+          <div class="rank-badge">{{ user.rank }}</div>
+          <div class="exp-text">灵力: {{ user.exp }}</div>
+        </div>
       </div>
     </div>
 
@@ -518,6 +611,7 @@ const fireConfetti = () => {
 }
 
 ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #9333ea, #06b6d4);
 }
 .tab-content::-webkit-scrollbar-thumb {
   background-color: rgba(139, 92, 246, 0.5);
@@ -571,7 +665,7 @@ const fireConfetti = () => {
 
 .header {
   text-align: center;
-  padding: 1.5rem 1rem 0.5rem; /* Reduced padding */
+  padding: 2.5rem 1rem 1.5rem; /* Increased padding */
   position: relative;
   z-index: 1;
   flex-shrink: 0;
@@ -597,52 +691,127 @@ const fireConfetti = () => {
 }
 
 .subtitle {
-  color: #c4b5fd;
-  margin: 0.5rem 0 1rem; /* Compact margin */
-  font-size: 0.95rem;
+  color: rgba(196, 181, 253, 0.7);
+  margin: 1.2rem 0 0.5rem; /* Increased margin */
+  font-size: 1rem;
   font-weight: 500;
-  letter-spacing: 0.5px;
-  text-shadow: 0 2px 10px rgba(196, 181, 253, 0.3);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  text-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  opacity: 0.8;
 }
 
 .status-card {
-  display: inline-block;
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.2) 0%, rgba(99, 102, 241, 0.15) 100%);
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.15) 0%, rgba(99, 102, 241, 0.1) 100%);
   backdrop-filter: blur(20px);
-  padding: 10px 24px; /* Scaled down */
-  border-radius: 20px;
-  border: 2px solid rgba(167, 139, 250, 0.3);
-  box-shadow: 0 8px 32px rgba(124, 58, 237, 0.4),
-              inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 16px 32px;
+  border-radius: 24px;
+  border: 1px solid rgba(167, 139, 250, 0.2);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: all 0.4s ease;
+  margin-top: 1rem;
 }
 
 .status-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 48px rgba(124, 58, 237, 0.6),
-              inset 0 1px 0 rgba(255, 255, 255, 0.15);
-  border-color: rgba(167, 139, 250, 0.5);
+  transform: translateY(-4px);
+  border-color: rgba(167, 139, 250, 0.4);
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.2) 0%, rgba(99, 102, 241, 0.15) 100%);
+}
+
+.user-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.cultivation-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .rank-badge {
   font-weight: 800;
-  font-size: 1.2rem; /* Scaled down */
+  font-size: 1.4rem;
   background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.6));
+  filter: drop-shadow(0 0 12px rgba(255, 215, 0, 0.4));
   font-family: 'Poppins', sans-serif;
 }
 
 .exp-text {
-  background: linear-gradient(135deg, #3fecff 0%, #06b6d4 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  font-size: 0.9rem;
+  color: #3fecff;
+  font-size: 0.95rem;
   margin-top: 4px;
   font-weight: 600;
+  opacity: 0.9;
+}
+
+.user-nickname {
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.guest-badge {
+  background: rgba(63, 236, 255, 0.15);
+  color: #3fecff;
+  padding: 3px 10px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: 1px solid rgba(63, 236, 255, 0.2);
+}
+
+/* Global Logout Button */
+.global-logout-btn {
+  position: absolute;
+  top: 25px;
+  right: 25px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.15); /* More visible border */
+  border-radius: 14px;
+  padding: 10px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: rgba(255, 255, 255, 0.8); /* Brighter text */
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  z-index: 100;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.global-logout-btn svg {
+  width: 18px;
+  height: 18px;
+  transition: transform 0.3s ease;
+}
+
+.global-logout-btn:hover {
+  background: rgba(255, 82, 82, 0.1);
+  border-color: rgba(255, 82, 82, 0.3);
+  color: #ff5252;
+  transform: translateX(-4px);
+  box-shadow: 0 4px 20px rgba(255, 82, 82, 0.15);
+}
+
+.global-logout-btn:hover svg {
+  transform: translateX(-2px);
+}
+
+.global-logout-btn:active {
+  transform: scale(0.95);
 }
 
 
@@ -652,7 +821,7 @@ const fireConfetti = () => {
   --van-tab-active-text-color: #ffffff;
   position: relative;
   z-index: 10;
-  margin-top: 0.5rem;
+  margin-top: 2rem; /* Increased from 0.5rem */
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -702,13 +871,14 @@ const fireConfetti = () => {
 
 /* ... existing tab item styles ... */
 .custom-tabs :deep(.van-tab) {
-  font-weight: 500;
+  font-weight: 600;
   font-size: 1rem;
-  transition: color 0.3s ease;
+  transition: all 0.3s ease;
   flex: none;
-  margin: 0 1rem;
-  padding: 0;
-  color: rgba(255, 255, 255, 0.6);
+  margin: 0 1.5rem; /* Increased margin */
+  padding: 0 10px;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.5px;
 }
 
 .custom-tabs :deep(.van-tab--active) {
@@ -729,14 +899,14 @@ const fireConfetti = () => {
 
 /* Scrollable Content Area */
 .tab-content {
-  padding: 1rem;
+  padding: 2.5rem 1.5rem; /* Increased from 1rem */
   overflow-y: auto !important;
   height: 100%;
   width: 100%;
   display: block;
   box-sizing: border-box;
   animation: fadeIn 0.5s ease-out;
-  padding-bottom: 5rem; /* Ensure space for last item */
+  padding-bottom: 6rem;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -752,13 +922,14 @@ const fireConfetti = () => {
 }
 
 .glass-input {
-  background: rgba(30, 27, 43, 0.4) !important;
-  border-radius: 16px;
-  border: 2px solid rgba(167, 139, 250, 0.2);
-  margin-bottom: 1rem;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  backdrop-filter: blur(10px);
-  padding: 2px 6px;
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 2rem; /* Increased margin */
+  transition: all 0.3s ease;
+  backdrop-filter: blur(15px);
+  padding: 4px 10px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
 /* Ensure inner elements are transparent */

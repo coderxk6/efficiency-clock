@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 @Data
 public class FocusTask {
   private Long id;
+  private Long userId;
   private String taskName;
   private Integer durationSeconds;
   private String status;
