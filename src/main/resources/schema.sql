@@ -1,22 +1,38 @@
 SET NAMES utf8mb4;
 ALTER DATABASE antigravity CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- 用户表
+CREATE TABLE IF NOT EXISTS user (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE COMMENT '用户名',
+    password VARCHAR(255) NOT NULL COMMENT '加密密码',
+    nickname VARCHAR(100) COMMENT '昵称',
+    is_guest BOOLEAN DEFAULT FALSE COMMENT '是否为游客',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS focus_task (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT COMMENT '用户ID',
     task_name VARCHAR(255),
     duration_seconds INT,
     status VARCHAR(20) DEFAULT 'RUNNING',
     started_at TIMESTAMP NULL,
     expected_end_at TIMESTAMP NULL,
-    completed_at TIMESTAMP NULL
+    completed_at TIMESTAMP NULL,
+    FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS user_level (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNIQUE COMMENT '用户ID',
     total_experience BIGINT DEFAULT 0,
-    cultivation_rank VARCHAR(255) DEFAULT 'Mortal'
+    cultivation_rank VARCHAR(255) DEFAULT 'Mortal',
+    FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 强制确保现有表的编码正确
+ALTER TABLE user CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ALTER TABLE focus_task CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ALTER TABLE user_level CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

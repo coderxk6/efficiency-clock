@@ -5,6 +5,7 @@ import lombok.Data;
 @Data
 public class UserLevel {
   private Long id;
+  private Long userId;
   private Long totalExperience;
   private String cultivationRank; // e.g. "Qi Refining", "Foundation Establishment"
 }
