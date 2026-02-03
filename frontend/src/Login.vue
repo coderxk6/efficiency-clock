@@ -33,11 +33,13 @@ const handleLogin = async () => {
       body: JSON.stringify(loginForm.value)
     });
 
-    const data = await res.json();
+    const body = await res.json();
     
-    if (!res.ok) {
-      throw new Error(data.message || '登录失败');
+    if (!res.ok || body.code !== 200) {
+      throw new Error(body.message || '登录失败');
     }
+
+    const data = body.data;
 
     // 存储 token 和用户信息
     localStorage.setItem('token', data.token);
@@ -88,11 +90,13 @@ const handleRegister = async () => {
       })
     });
 
-    const data = await res.json();
+    const body = await res.json();
     
-    if (!res.ok) {
-      throw new Error(data.message || '注册失败');
+    if (!res.ok || body.code !== 200) {
+      throw new Error(body.message || '注册失败');
     }
+
+    const data = body.data;
 
     // 存储 token 和用户信息
     localStorage.setItem('token', data.token);
@@ -181,12 +185,14 @@ const handleGuestLogin = async () => {
       method: 'POST'
     });
 
-    const data = await res.json();
-    console.log('游客账号创建成功:', data.username);
+    const body = await res.json();
     
-    if (!res.ok) {
-      throw new Error(data.message || '游客登录失败');
+    if (!res.ok || body.code !== 200) {
+      throw new Error(body.message || '游客登录失败');
     }
+
+    const data = body.data;
+    console.log('游客账号创建成功:', data.username);
 
     // 存储 token 和用户信息
     localStorage.setItem('token', data.token);

@@ -1,9 +1,11 @@
 package com.antigravity.service;
 
+import com.antigravity.common.ResultCode;
 import com.antigravity.dto.AuthResponse;
 import com.antigravity.dto.LoginRequest;
 import com.antigravity.dto.RegisterRequest;
 import com.antigravity.entity.User;
+import com.antigravity.exception.BusinessException;
 import com.antigravity.mapper.UserMapper;
 import com.antigravity.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +31,7 @@ public class UserService {
     public AuthResponse register(RegisterRequest request) {
         // 检查用户名是否已存在
         if (userMapper.existsByUsername(request.getUsername())) {
-            throw new RuntimeException("用户名已存在");
+            throw new BusinessException(ResultCode.BAD_REQUEST, "用户名已存在");
         }
 
         // 创建用户
@@ -51,11 +53,11 @@ public class UserService {
      */
     public AuthResponse login(LoginRequest request) {
         User user = userMapper.findByUsername(request.getUsername())
-                .orElseThrow(() -> new RuntimeException("用户名或密码错误"));
+                .orElseThrow(() -> new BusinessException(ResultCode.BAD_REQUEST, "用户名或密码错误"));
 
         // 验证密码
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new RuntimeException("用户名或密码错误");
+            throw new BusinessException(ResultCode.BAD_REQUEST, "用户名或密码错误");
         }
 
         // 生成 Token
@@ -89,7 +91,7 @@ public class UserService {
      */
     public User getUserByUsername(String username) {
         return userMapper.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+                .orElseThrow(() -> new BusinessException(ResultCode.NOT_FOUND, "用户不存在"));
     }
 
     /**
@@ -97,6 +99,6 @@ public class UserService {
      */
     public User getUserById(Long id) {
         return userMapper.findById(id)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+                .orElseThrow(() -> new BusinessException(ResultCode.NOT_FOUND, "用户不存在"));
     }
 }
