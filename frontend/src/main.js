@@ -1,37 +1,24 @@
-import { createApp } from 'vue'
-import App from './App.vue'
-import './style.css'
+import { createApp } from 'vue';
+import './style.css';
+import App from './App.vue';
+import { createPinia } from 'pinia';
+import router from './router';
 
-// Vant UI
-import 'vant/lib/index.css'
-import {
-  Button,
-  Circle,
-  CountDown,
-  Dialog,
-  Field,
-  Popup,
-  Toast,
-  Notify,
-  ConfigProvider,
-  Switch,
-  Tab,
-  Tabs
-} from 'vant'
+// Vant 样式
+import { Button, Field, Switch, Tab, Tabs, Circle } from 'vant';
+import 'vant/lib/index.css';
 
-const app = createApp(App)
+const app = createApp(App);
 
-app.use(Button)
-app.use(Circle)
-app.use(CountDown)
-app.use(Dialog)
-app.use(Field)
-app.use(Popup)
-app.use(Toast)
-app.use(Notify)
-app.use(ConfigProvider)
-app.use(Switch)
-app.use(Tab)
-app.use(Tabs)
+const pinia = createPinia();
+app.use(pinia);
+app.use(router);
 
-app.mount('#app')
+app.use(Button);
+app.use(Field);
+app.use(Switch);
+app.use(Tab);
+app.use(Tabs);
+app.use(Circle);
+
+app.mount('#app');

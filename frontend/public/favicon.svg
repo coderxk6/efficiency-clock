@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <defs>
+    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="50%" stop-color="#60a5fa"/>
+      <stop offset="100%" stop-color="#2563eb"/>
+    </linearGradient>
+    <linearGradient id="handH" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#93c5fd"/>
+      <stop offset="100%" stop-color="#2563eb"/>
+    </linearGradient>
+    <linearGradient id="handM" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#bfdbfe"/>
+      <stop offset="100%" stop-color="#3b82f6"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#1e40af" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- Outer clock ring -->
+  <circle cx="50" cy="50" r="44" stroke="url(#ringGrad)" stroke-width="5" filter="url(#softShadow)"/>
+
+  <!-- Inner subtle ring -->
+  <circle cx="50" cy="50" r="38" stroke="#60a5fa" stroke-width="0.8" stroke-opacity="0.35"/>
+
+  <!-- Hour markers - 12, 3, 6, 9 (larger) -->
+  <line x1="50" y1="10" x2="50" y2="18" stroke="#60a5fa" stroke-width="3.5" stroke-linecap="round"/>
+  <line x1="90" y1="50" x2="82" y2="50" stroke="#60a5fa" stroke-width="3.5" stroke-linecap="round"/>
+  <line x1="50" y1="90" x2="50" y2="82" stroke="#60a5fa" stroke-width="3.5" stroke-linecap="round"/>
+  <line x1="10" y1="50" x2="18" y2="50" stroke="#60a5fa" stroke-width="3.5" stroke-linecap="round"/>
+
+  <!-- Minor hour markers -->
+  <line x1="71.2" y1="13.2" x2="68.1" y2="18.6" stroke="#93c5fd" stroke-width="1.8" stroke-linecap="round" stroke-opacity="0.7"/>
+  <line x1="86.8" y1="28.8" x2="81.4" y2="31.9" stroke="#93c5fd" stroke-width="1.8" stroke-linecap="round" stroke-opacity="0.7"/>
+  <line x1="86.8" y1="71.2" x2="81.4" y2="68.1" stroke="#93c5fd" stroke-width="1.8" stroke-linecap="round" stroke-opacity="0.7"/>
+  <line x1="71.2" y1="86.8" x2="68.1" y2="81.4" stroke="#93c5fd" stroke-width="1.8" stroke-linecap="round" stroke-opacity="0.7"/>
+  <line x1="28.8" y1="86.8" x2="31.9" y2="81.4" stroke="#93c5fd" stroke-width="1.8" stroke-linecap="round" stroke-opacity="0.7"/>
+  <line x1="13.2" y1="71.2" x2="18.6" y2="68.1" stroke="#93c5fd" stroke-width="1.8" stroke-linecap="round" stroke-opacity="0.7"/>
+  <line x1="13.2" y1="28.8" x2="18.6" y2="31.9" stroke="#93c5fd" stroke-width="1.8" stroke-linecap="round" stroke-opacity="0.7"/>
+  <line x1="28.8" y1="13.2" x2="31.9" y2="18.6" stroke="#93c5fd" stroke-width="1.8" stroke-linecap="round" stroke-opacity="0.7"/>
+
+  <!-- Hour hand (10 o'clock direction) -->
+  <line x1="50" y1="50" x2="36" y2="32" stroke="url(#handH)" stroke-width="4.5" stroke-linecap="round" filter="url(#glow)"/>
+
+  <!-- Minute hand (2 o'clock direction) -->
+  <line x1="50" y1="50" x2="65" y2="26" stroke="url(#handM)" stroke-width="3" stroke-linecap="round" filter="url(#glow)"/>
+
+  <!-- Center dot -->
+  <circle cx="50" cy="50" r="5" fill="#2563eb" stroke="#93c5fd" stroke-width="2" filter="url(#glow)"/>
+  <circle cx="50" cy="50" r="2" fill="#e0f2fe"/>
+</svg>
